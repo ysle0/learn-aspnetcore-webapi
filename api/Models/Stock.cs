@@ -16,6 +16,6 @@ public class Stock {
 
   public string Industry { get; set; } = "";
 
-  public long MarketGap { get; set; }
+  public long MarketCap { get; set; }
   public List<Comment> Comments { get; set; } = new();
 }
