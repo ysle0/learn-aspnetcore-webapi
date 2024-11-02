@@ -1,4 +1,6 @@
 using api.Data;
+using api.Interfaces;
+using api.Repository;
 using api.Utils;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +18,7 @@ var autoMapper = AutoMapperWrapper.RegisterMappings();
 
 // Inject dependencies
 builder.Services.AddSingleton(autoMapper);
+builder.Services.AddScoped<IStockRepository, StockRepository>();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
