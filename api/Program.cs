@@ -14,7 +14,7 @@ if (string.IsNullOrEmpty(connectionString)) {
 }
 
 // init auto mapper
-var autoMapperConfig = new AutoMapper.MapperConfiguration(cfg => {
+var autoMapperConfig = new MapperConfiguration(cfg => {
   cfg.CreateMap<Stock, StockDto>();
   cfg.CreateMap<CreateStockRequestDto, Stock>();
 });

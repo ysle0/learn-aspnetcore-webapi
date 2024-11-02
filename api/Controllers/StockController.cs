@@ -1,34 +1,50 @@
 using api.Data;
-using api.Mappers;
+using api.DTOs.Stock;
+using api.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
 [Route("api/stock")]
 [ApiController]
-public class StockController : ControllerBase {
-  readonly ApplicationDbContext _dbContext;
-
-  public StockController(ApplicationDbContext dbContext) {
-    _dbContext = dbContext;
-  }
-
+public class StockController(
+  ApplicationDbContext dbContext,
+  IMapper mapper
+) : ControllerBase {
   [HttpGet]
+  [ProducesResponseType<IEnumerable<StockDto>>(StatusCodes.Status200OK)]
   public IActionResult GetAll() {
-    var stocks = _dbContext.Stock
-      .ToList()
-      .Select(s => s.ToStockDto());
+    var stocks = dbContext.Stocks
+      .AsEnumerable()
+      .Select(mapper.Map<StockDto>);
 
     return Ok(stocks);
   }
 
   [HttpGet("{id}")]
+  [ProducesResponseType<StockDto>(StatusCodes.Status404NotFound)]
   public IActionResult GetById([FromRoute] int id) {
-    var stock = _dbContext.Stock.Find(id);
+    var stock = dbContext.Stocks.Find(id);
     if (stock == null) {
       return NotFound();
     }
 
-    return Ok(stock.ToStockDto());
+    var stockDto = mapper.Map<StockDto>(stock);
+    return Ok(stockDto);
+  }
+
+  [HttpPost]
+  [ProducesResponseType(StatusCodes.Status201Created)]
+  public IActionResult Create(
+    [FromBody] CreateStockRequestDto createStockRequestDto) {
+    var stockModel = mapper.Map<Stock>(createStockRequestDto);
+    dbContext.Stocks.Add(stockModel);
+    dbContext.SaveChanges();
+
+    return CreatedAtAction(
+      nameof(GetById),
+      new { id = stockModel.Id },
+      stockModel);
   }
 }
