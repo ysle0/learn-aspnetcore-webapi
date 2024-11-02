@@ -1,6 +1,6 @@
 namespace api.DTOs.Stock;
 
-internal record struct StockDto(
+public record struct StockDto(
   int Id,
   string CompanyName,
   string Symbol,
