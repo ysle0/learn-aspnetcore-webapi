@@ -1,6 +1,6 @@
 namespace api.DTOs.Stock;
 
-public record struct CreateStockRequestDto(
+public record struct StockCreateDto(
   string CompanyName,
   string Symbol,
   decimal Purchase,

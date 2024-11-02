@@ -37,8 +37,9 @@ public class StockController(
   [HttpPost]
   [ProducesResponseType(StatusCodes.Status201Created)]
   public IActionResult Create(
-    [FromBody] CreateStockRequestDto createDto) {
-    var stockModel = mapper.Map<Stock>(createDto);
+    [FromBody] StockCreateDto stockCreateDto
+  ) {
+    var stockModel = mapper.Map<Stock>(stockCreateDto);
     dbContext.Stocks.Add(stockModel);
     dbContext.SaveChanges();
 
@@ -53,19 +54,35 @@ public class StockController(
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   public IActionResult Update(
     [FromRoute] int id,
-    [FromBody] UpdateStockRequestDto updateDto) {
+    [FromBody] StockUpdateDto stockUpdateDto
+  ) {
     Stock? stockModel = dbContext.Stocks.FirstOrDefault(s => s.Id == id);
     if (stockModel == null) return NotFound();
 
-    stockModel.Symbol = updateDto.Symbol;
-    stockModel.LastDividend = updateDto.LastDividend;
-    stockModel.Industry = updateDto.Industry;
-    stockModel.Purchase = updateDto.Purchase;
-    stockModel.MarketCap = updateDto.MarketCap;
-    stockModel.CompanyName = updateDto.CompanyName;
-    
+    stockModel.Symbol = stockUpdateDto.Symbol;
+    stockModel.LastDividend = stockUpdateDto.LastDividend;
+    stockModel.Industry = stockUpdateDto.Industry;
+    stockModel.Purchase = stockUpdateDto.Purchase;
+    stockModel.MarketCap = stockUpdateDto.MarketCap;
+    stockModel.CompanyName = stockUpdateDto.CompanyName;
+
     dbContext.SaveChanges();
-    
+
     return Ok(mapper.Map<StockDto>(stockModel));
+  }
+
+  [HttpDelete]
+  [Route("{id:int}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  public IActionResult Delete(
+    [FromRoute] int id
+  ) {
+    var stockModel = dbContext.Stocks.FirstOrDefault(s => s.Id == id);
+    if (stockModel == null) return NotFound();
+
+    dbContext.Stocks.Remove(stockModel);
+    dbContext.SaveChanges();
+
+    return NoContent();
   }
 }

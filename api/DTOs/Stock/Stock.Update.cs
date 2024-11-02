@@ -1,6 +1,6 @@
 namespace api.Controllers;
 
-public record struct UpdateStockRequestDto(
+public record struct StockUpdateDto(
   string CompanyName,
   string Symbol,
   string Comments,
