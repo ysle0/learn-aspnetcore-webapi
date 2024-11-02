@@ -22,7 +22,7 @@ public class StockController(
     return Ok(stocks);
   }
 
-  [HttpGet("{id}")]
+  [HttpGet("{id:int}")]
   [ProducesResponseType<StockDto>(StatusCodes.Status404NotFound)]
   public IActionResult GetById([FromRoute] int id) {
     var stock = dbContext.Stocks.Find(id);
@@ -37,14 +37,35 @@ public class StockController(
   [HttpPost]
   [ProducesResponseType(StatusCodes.Status201Created)]
   public IActionResult Create(
-    [FromBody] CreateStockRequestDto createStockRequestDto) {
-    var stockModel = mapper.Map<Stock>(createStockRequestDto);
+    [FromBody] CreateStockRequestDto createDto) {
+    var stockModel = mapper.Map<Stock>(createDto);
     dbContext.Stocks.Add(stockModel);
     dbContext.SaveChanges();
 
     return CreatedAtAction(
       nameof(GetById),
-      new { id = stockModel.Id },
+      new { id = stockModel.Id, },
       stockModel);
+  }
+
+  [HttpPut]
+  [Route("{id:int}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  public IActionResult Update(
+    [FromRoute] int id,
+    [FromBody] UpdateStockRequestDto updateDto) {
+    Stock? stockModel = dbContext.Stocks.FirstOrDefault(s => s.Id == id);
+    if (stockModel == null) return NotFound();
+
+    stockModel.Symbol = updateDto.Symbol;
+    stockModel.LastDividend = updateDto.LastDividend;
+    stockModel.Industry = updateDto.Industry;
+    stockModel.Purchase = updateDto.Purchase;
+    stockModel.MarketCap = updateDto.MarketCap;
+    stockModel.CompanyName = updateDto.CompanyName;
+    
+    dbContext.SaveChanges();
+    
+    return Ok(mapper.Map<StockDto>(stockModel));
   }
 }

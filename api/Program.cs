@@ -1,7 +1,5 @@
 using api.Data;
-using api.DTOs.Stock;
-using api.Models;
-using AutoMapper;
+using api.Utils;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,11 +12,7 @@ if (string.IsNullOrEmpty(connectionString)) {
 }
 
 // init auto mapper
-var autoMapperConfig = new MapperConfiguration(cfg => {
-  cfg.CreateMap<Stock, StockDto>();
-  cfg.CreateMap<CreateStockRequestDto, Stock>();
-});
-var autoMapper = autoMapperConfig.CreateMapper();
+var autoMapper = AutoMapperWrapper.RegisterMappings();
 
 // Inject dependencies
 builder.Services.AddSingleton(autoMapper);
