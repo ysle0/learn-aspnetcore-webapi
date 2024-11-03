@@ -10,11 +10,12 @@ using Microsoft.EntityFrameworkCore;
 namespace api.Repository;
 
 public class StockRepository(
-  DataContext c,
+  MySqlContext c,
   IMapper mp
 ) : IStockRepository {
   public async Task<List<StockDto>> GetAll() =>
     await c.Stocks
+      .Include(e => e.Comments)
       .ProjectTo<StockDto>(mp.ConfigurationProvider)
       .ToListAsync();
 
@@ -28,8 +29,9 @@ public class StockRepository(
     return cnt > 0;
   }
 
-  public async Task<Stock> Update(int id, StockUpdateDto u) {
+  public async Task<Stock?> Update(int id, StockUpdateDto u) {
     Stock? s = await c.Stocks.FirstOrDefaultAsync(e => e.Id == id);
+    if (s == null) return null;
 
     s.CompanyName = u.CompanyName;
     s.Industry = u.Industry;
@@ -44,7 +46,7 @@ public class StockRepository(
   }
 
   public async Task<bool> Delete(int id) {
-    Stock? sToDelete = c.Stocks.FirstOrDefault(e => e.Id == id);
+    Stock? sToDelete = await c.Stocks.FirstOrDefaultAsync(e => e.Id == id);
     if (sToDelete == null) return false;
 
     c.Stocks.Remove(sToDelete);
@@ -52,4 +54,7 @@ public class StockRepository(
 
     return cnt > 0;
   }
+
+  public async Task<bool> ExistsStock(int id) =>
+    await c.Stocks.AnyAsync(e => e.Id == id);
 }

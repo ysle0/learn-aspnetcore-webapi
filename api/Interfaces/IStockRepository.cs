@@ -8,6 +8,7 @@ public interface IStockRepository {
   Task<List<StockDto>> GetAll();
   ValueTask<Stock?> GetById(int id);
   Task<bool> AddNew(Stock? s);
-  Task<Stock> Update(int id, StockUpdateDto u);
+  Task<Stock?> Update(int id, StockUpdateDto u);
   Task<bool> Delete(int id);
+  Task<bool> ExistsStock(int id);
 }

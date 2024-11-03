@@ -1,4 +1,5 @@
 using api.Controllers;
+using api.DTOs.Comment;
 using api.DTOs.Stock;
 using api.Models;
 using AutoMapper;
@@ -10,5 +11,9 @@ public class MappingProfile : Profile {
     CreateMap<Stock, StockDto>();
     CreateMap<StockCreateDto, Stock>();
     CreateMap<StockUpdateDto, Stock>();
+
+    CreateMap<Comment, CommentDto>();
+    // CreateMap<CommentDto, Comment>();
+    CreateMap<CreateCommentDto, Comment>();
   }
 }

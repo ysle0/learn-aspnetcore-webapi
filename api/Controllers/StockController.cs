@@ -22,10 +22,10 @@ public class StockController(
   [HttpGet("{id:int}")]
   [ProducesResponseType<StockDto>(StatusCodes.Status404NotFound)]
   public async Task<IActionResult> GetById([FromRoute] int id) {
-    var stock = await r.GetById(id);
-    if (stock == null) return NotFound();
+    Stock? s = await r.GetById(id);
+    if (s == null) return NotFound();
 
-    return Ok(mp.Map<StockDto>(stock));
+    return Ok(mp.Map<StockDto>(s));
   }
 
   [HttpPost]

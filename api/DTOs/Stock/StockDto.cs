@@ -1,3 +1,5 @@
+using api.DTOs.Comment;
+
 namespace api.DTOs.Stock;
 
 public record struct StockDto(
@@ -7,5 +9,6 @@ public record struct StockDto(
   decimal Purchase,
   decimal LastDividend,
   string Industry,
-  long MarketCap
+  long MarketCap,
+  List<CommentDto> Comments
 );
