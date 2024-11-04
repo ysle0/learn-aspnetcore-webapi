@@ -17,11 +17,13 @@ public class CommentRepository : ICommentRepository {
     _mapper = mapper;
   }
 
-  public async ValueTask<Comment?> GetById(int id) =>
-    await _ctx.Comments.FindAsync(id);
+  public async ValueTask<Comment?> GetById(int id) {
+    return await _ctx.Comments.FindAsync(id);
+  }
 
-  public async Task<List<Comment>> GetAll() =>
-    await _ctx.Comments.ToListAsync();
+  public async Task<List<Comment>> GetAll() {
+    return await _ctx.Comments.ToListAsync();
+  }
 
   public async Task<Comment> CreateNew(Comment comment) {
     await _ctx.Comments.AddAsync(comment);

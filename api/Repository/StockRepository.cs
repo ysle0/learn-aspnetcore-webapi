@@ -1,6 +1,7 @@
 using api.Controllers;
 using api.Data;
 using api.DTOs.Stock;
+using api.Helpers;
 using api.Interfaces;
 using api.Models;
 using AutoMapper;
@@ -18,11 +19,22 @@ public class StockRepository : IStockRepository {
     _mapper = mapper;
   }
 
-  public async Task<List<StockDto>> GetAll() =>
-    await _ctx.Stocks
+  public async Task<List<StockDto>> GetAll(QueryObject query) {
+    var stocks = _ctx.Stocks
       .Include(e => e.Comments)
       .ProjectTo<StockDto>(_mapper.ConfigurationProvider)
-      .ToListAsync();
+      .AsQueryable();
+
+    if (!string.IsNullOrWhiteSpace(query.CompanyName)) {
+      stocks = stocks.Where(e => e.CompanyName.Contains(query.CompanyName));
+    }
+
+    if (!string.IsNullOrWhiteSpace(query.Symbol)) {
+      stocks = stocks.Where(e => e.Symbol.Contains(query.Symbol));
+    }
+
+    return await stocks.ToListAsync();
+  }
 
   public async ValueTask<Stock?> GetById(int id) =>
     await _ctx.Stocks.FindAsync(id);

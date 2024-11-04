@@ -1,4 +1,5 @@
 using api.DTOs.Stock;
+using api.Helpers;
 using api.Interfaces;
 using api.Models;
 using AutoMapper;
@@ -22,10 +23,10 @@ public class StockController : ControllerBase {
 
   [HttpGet]
   [ProducesResponseType<IEnumerable<StockDto>>(StatusCodes.Status200OK)]
-  public async Task<IActionResult> GetAll() {
+  public async Task<IActionResult> GetAll([FromQuery] QueryObject query) {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
-    var allStocks = await _stockRepository.GetAll();
+    var allStocks = await _stockRepository.GetAll(query);
     return Ok(allStocks);
   }
 
