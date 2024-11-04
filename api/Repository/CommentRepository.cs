@@ -8,18 +8,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Repository;
 
-public class CommentRepository(
-  MySqlContext _c,
-  IMapper _mp
-) : ICommentRepository {
-  public async ValueTask<Comment?> GetById(int id) =>
-    await _c.Comments.FindAsync(id);
+public class CommentRepository : ICommentRepository {
+  readonly MySqlContext _ctx;
+  readonly IMapper _mapper;
 
-  public async Task<List<Comment>> GetAll() => await _c.Comments.ToListAsync();
+  public CommentRepository(MySqlContext context, IMapper mapper) {
+    _ctx = context;
+    _mapper = mapper;
+  }
+
+  public async ValueTask<Comment?> GetById(int id) =>
+    await _ctx.Comments.FindAsync(id);
+
+  public async Task<List<Comment>> GetAll() => await _ctx.Comments.ToListAsync();
 
   public async Task<Comment> CreateNew(Comment c) {
-    await _c.Comments.AddAsync(c);
-    await _c.SaveChangesAsync();
+    await _ctx.Comments.AddAsync(c);
+    await _ctx.SaveChangesAsync();
 
     return c;
   }

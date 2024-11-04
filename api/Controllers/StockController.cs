@@ -8,24 +8,30 @@ namespace api.Controllers;
 
 [Route("api/stock")]
 [ApiController]
-public class StockController(
-  IStockRepository r,
-  IMapper mp
-) : ControllerBase {
+public class StockController : ControllerBase {
+  readonly IStockRepository _stockRepository;
+  readonly IMapper _mapper;
+
+  public StockController(
+    IStockRepository stockRepository,
+    IMapper mapper
+  ) {
+    _mapper = mapper;
+    _stockRepository = stockRepository;
+  }
+
   [HttpGet]
   [ProducesResponseType<IEnumerable<StockDto>>(StatusCodes.Status200OK)]
-  public async Task<IActionResult> GetAll() {
-    var s = await r.GetAll();
-    return Ok(s);
-  }
+  public async Task<IActionResult> GetAll() =>
+    Ok(await _stockRepository.GetAll());
 
   [HttpGet("{id:int}")]
   [ProducesResponseType<StockDto>(StatusCodes.Status404NotFound)]
   public async Task<IActionResult> GetById([FromRoute] int id) {
-    Stock? s = await r.GetById(id);
-    if (s == null) return NotFound();
+    Stock? stock = await _stockRepository.GetById(id);
+    if (stock == null) return NotFound();
 
-    return Ok(mp.Map<StockDto>(s));
+    return Ok(_mapper.Map<StockDto>(stock));
   }
 
   [HttpPost]
@@ -33,10 +39,13 @@ public class StockController(
   public async Task<IActionResult> Create(
     [FromBody] StockCreateDto createDto
   ) {
-    var s = mp.Map<Stock>(createDto);
-    await r.AddNew(s);
+    var stock = _mapper.Map<Stock>(createDto);
+    await _stockRepository.AddNew(stock);
 
-    return CreatedAtAction(nameof(GetById), new { id = s.Id, }, s);
+    return CreatedAtAction(
+      nameof(GetById),
+      new { id = stock.Id, },
+      stock);
   }
 
   [HttpPut]
@@ -46,15 +55,19 @@ public class StockController(
     [FromRoute] int id,
     [FromBody] StockUpdateDto updateDto
   ) {
-    var s = await r.Update(id, updateDto);
-    return s == null ? NotFound() : Ok(s);
+    var updatedStock = await _stockRepository.Update(id, updateDto);
+    if (updatedStock == null) return NotFound();
+
+    return Ok(updatedStock);
   }
 
   [HttpDelete]
   [Route("{id:int}")]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   public async Task<IActionResult> Delete([FromRoute] int id) {
-    bool suc = await r.Delete(id);
-    return !suc ? NotFound() : NoContent();
+    bool isDeleteSuccess = await _stockRepository.Delete(id);
+    if (!isDeleteSuccess) return NoContent();
+
+    return NotFound();
   }
 }

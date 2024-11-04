@@ -13,7 +13,6 @@ public class MappingProfile : Profile {
     CreateMap<StockUpdateDto, Stock>();
 
     CreateMap<Comment, CommentDto>();
-    // CreateMap<CommentDto, Comment>();
     CreateMap<CreateCommentDto, Comment>();
   }
 }

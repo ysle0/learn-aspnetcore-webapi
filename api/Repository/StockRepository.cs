@@ -9,28 +9,33 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Repository;
 
-public class StockRepository(
-  MySqlContext c,
-  IMapper mp
-) : IStockRepository {
+public class StockRepository : IStockRepository {
+  readonly MySqlContext _ctx;
+  readonly IMapper _mapper;
+
+  public StockRepository(MySqlContext ctx, IMapper mapper) {
+    _ctx = ctx;
+    _mapper = mapper;
+  }
+
   public async Task<List<StockDto>> GetAll() =>
-    await c.Stocks
+    await _ctx.Stocks
       .Include(e => e.Comments)
-      .ProjectTo<StockDto>(mp.ConfigurationProvider)
+      .ProjectTo<StockDto>(_mapper.ConfigurationProvider)
       .ToListAsync();
 
   public async ValueTask<Stock?> GetById(int id) =>
-    await c.Stocks.FindAsync(id);
+    await _ctx.Stocks.FindAsync(id);
 
   public async Task<bool> AddNew(Stock? s) {
-    await c.Stocks.AddAsync(s);
-    int cnt = await c.SaveChangesAsync();
+    await _ctx.Stocks.AddAsync(s);
+    int cnt = await _ctx.SaveChangesAsync();
 
     return cnt > 0;
   }
 
   public async Task<Stock?> Update(int id, StockUpdateDto u) {
-    Stock? s = await c.Stocks.FirstOrDefaultAsync(e => e.Id == id);
+    Stock? s = await _ctx.Stocks.FirstOrDefaultAsync(e => e.Id == id);
     if (s == null) return null;
 
     s.CompanyName = u.CompanyName;
@@ -40,21 +45,21 @@ public class StockRepository(
     s.MarketCap = u.MarketCap;
     s.LastDividend = u.LastDividend;
 
-    await c.SaveChangesAsync();
+    await _ctx.SaveChangesAsync();
 
     return s;
   }
 
   public async Task<bool> Delete(int id) {
-    Stock? sToDelete = await c.Stocks.FirstOrDefaultAsync(e => e.Id == id);
+    Stock? sToDelete = await _ctx.Stocks.FirstOrDefaultAsync(e => e.Id == id);
     if (sToDelete == null) return false;
 
-    c.Stocks.Remove(sToDelete);
-    int cnt = await c.SaveChangesAsync();
+    _ctx.Stocks.Remove(sToDelete);
+    int cnt = await _ctx.SaveChangesAsync();
 
     return cnt > 0;
   }
 
   public async Task<bool> ExistsStock(int id) =>
-    await c.Stocks.AnyAsync(e => e.Id == id);
+    await _ctx.Stocks.AnyAsync(e => e.Id == id);
 }

@@ -8,23 +8,34 @@ namespace api.Controllers;
 
 [Route("api/comment")]
 [ApiController]
-public class CommentController(
-  ICommentRepository _rc,
-  IStockRepository _rs,
-  IMapper _mp
-) : ControllerBase {
+public class CommentController : ControllerBase {
+  readonly ICommentRepository _commentRepository;
+  readonly IStockRepository _stockRepository;
+  readonly IMapper _mapper;
+
+  public CommentController(
+    IMapper mapper,
+    IStockRepository stockRepository,
+    ICommentRepository commentRepository
+  ) {
+    _mapper = mapper;
+    _stockRepository = stockRepository;
+    _commentRepository = commentRepository;
+  }
+
   [HttpGet]
   [ProducesResponseType<List<Comment>>(StatusCodes.Status200OK)]
-  public async Task<IActionResult> GetAllComments() => Ok(await _rc.GetAll());
+  public async Task<IActionResult> GetAllComments() =>
+    Ok(await _commentRepository.GetAll());
 
   [HttpGet]
   [Route("{id:int}")]
   [ProducesResponseType<CommentDto>(StatusCodes.Status200OK)]
   public async ValueTask<IActionResult> GetById([FromRoute] int id) {
-    Comment c = await _rc.GetById(id);
+    Comment c = await _commentRepository.GetById(id);
     if (c == null) return NotFound();
 
-    return Ok(_mp.Map<CommentDto>(c));
+    return Ok(_mapper.Map<CommentDto>(c));
   }
 
   [HttpPost("{stockId:int}")]
@@ -33,17 +44,17 @@ public class CommentController(
       [FromRoute] int stockId,
       [FromBody] CreateCommentDto createDto
     ) {
-    bool isExist = await _rs.ExistsStock(stockId);
+    bool isExist = await _stockRepository.ExistsStock(stockId);
     if (!isExist) return BadRequest("Stock does not exist");
 
-    var c = _mp.Map<Comment>(createDto);
+    var c = _mapper.Map<Comment>(createDto);
     c.StockId = stockId;
 
-    var newC = await _rc.CreateNew(c);
+    var newC = await _commentRepository.CreateNew(c);
 
     return CreatedAtAction(
       nameof(GetById),
       new { Id = c.Id, },
-      _mp.Map<CommentDto>(newC));
+      _mapper.Map<CommentDto>(newC));
   }
 }
