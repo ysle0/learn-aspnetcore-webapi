@@ -14,5 +14,6 @@ public class MappingProfile : Profile {
 
     CreateMap<Comment, CommentDto>();
     CreateMap<CreateCommentDto, Comment>();
+    CreateMap<UpdateCommentDto, Comment>();
   }
 }

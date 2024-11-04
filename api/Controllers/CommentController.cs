@@ -57,4 +57,26 @@ public class CommentController : ControllerBase {
       new { Id = c.Id, },
       _mapper.Map<CommentDto>(newC));
   }
+
+  [HttpPut("{id:int}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  public async Task<IActionResult> Update(
+    [FromRoute] int id,
+    [FromBody] UpdateCommentDto dto
+  ) {
+    var updatedComment
+      = await _commentRepository.Update(id, _mapper.Map<Comment>(dto));
+    if (updatedComment == null) return NotFound();
+
+    return NoContent();
+  }
+
+  [HttpDelete("{id:int}")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  public async Task<IActionResult> Delete([FromRoute] int id) {
+    var deletedComment = await _commentRepository.Delete(id);
+    if (deletedComment == null) return NotFound("Comment not found");
+
+    return Ok();
+  }
 }
