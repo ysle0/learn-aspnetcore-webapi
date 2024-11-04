@@ -1,10 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace api.DTOs.Stock;
 
-public record struct StockCreateDto(
-  string CompanyName,
-  string Symbol,
-  decimal Purchase,
-  decimal LastDividend,
-  string Industry,
-  long MarketCap
-);
+public class StockCreateDto {
+  [Required] [Length(4, 280)] public string CompanyName { get; set; } = "";
+  [Required] [Length(4, 280)] public string Symbol { get; set; } = "";
+  [Required] public decimal Purchase { get; set; }
+  [Required] public decimal LastDividend { get; set; }
+  [Required] [Length(4, 280)] public string Industry { get; set; } = "";
+  [Required] public long MarketCap { get; set; }
+}

@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
-[Route("api/comment")]
 [ApiController]
+[Route("api/[controller]")]
 public class CommentController : ControllerBase {
   readonly ICommentRepository _commentRepository;
   readonly IStockRepository _stockRepository;
@@ -25,13 +25,19 @@ public class CommentController : ControllerBase {
 
   [HttpGet]
   [ProducesResponseType<List<Comment>>(StatusCodes.Status200OK)]
-  public async Task<IActionResult> GetAllComments() =>
-    Ok(await _commentRepository.GetAll());
+  public async Task<IActionResult> GetAllComments() {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
+    var allComments = await _commentRepository.GetAll();
+    return Ok(allComments);
+  }
 
   [HttpGet]
   [Route("{id:int}")]
   [ProducesResponseType<CommentDto>(StatusCodes.Status200OK)]
   public async ValueTask<IActionResult> GetById([FromRoute] int id) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     Comment c = await _commentRepository.GetById(id);
     if (c == null) return NotFound();
 
@@ -44,6 +50,8 @@ public class CommentController : ControllerBase {
       [FromRoute] int stockId,
       [FromBody] CreateCommentDto createDto
     ) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     bool isExist = await _stockRepository.ExistsStock(stockId);
     if (!isExist) return BadRequest("Stock does not exist");
 
@@ -64,6 +72,8 @@ public class CommentController : ControllerBase {
     [FromRoute] int id,
     [FromBody] UpdateCommentDto dto
   ) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     var updatedComment
       = await _commentRepository.Update(id, _mapper.Map<Comment>(dto));
     if (updatedComment == null) return NotFound();
@@ -74,6 +84,8 @@ public class CommentController : ControllerBase {
   [HttpDelete("{id:int}")]
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<IActionResult> Delete([FromRoute] int id) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     var deletedComment = await _commentRepository.Delete(id);
     if (deletedComment == null) return NotFound("Comment not found");
 

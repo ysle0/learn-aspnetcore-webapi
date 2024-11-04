@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
-[Route("api/stock")]
 [ApiController]
+[Route("api/[controller]")]
 public class StockController : ControllerBase {
   readonly IStockRepository _stockRepository;
   readonly IMapper _mapper;
@@ -22,12 +22,18 @@ public class StockController : ControllerBase {
 
   [HttpGet]
   [ProducesResponseType<IEnumerable<StockDto>>(StatusCodes.Status200OK)]
-  public async Task<IActionResult> GetAll() =>
-    Ok(await _stockRepository.GetAll());
+  public async Task<IActionResult> GetAll() {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
+    var allStocks = await _stockRepository.GetAll();
+    return Ok(allStocks);
+  }
 
   [HttpGet("{id:int}")]
   [ProducesResponseType<StockDto>(StatusCodes.Status404NotFound)]
   public async Task<IActionResult> GetById([FromRoute] int id) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     Stock? stock = await _stockRepository.GetById(id);
     if (stock == null) return NotFound();
 
@@ -39,6 +45,8 @@ public class StockController : ControllerBase {
   public async Task<IActionResult> Create(
     [FromBody] StockCreateDto createDto
   ) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     var stock = _mapper.Map<Stock>(createDto);
     await _stockRepository.AddNew(stock);
 
@@ -55,6 +63,8 @@ public class StockController : ControllerBase {
     [FromRoute] int id,
     [FromBody] StockUpdateDto updateDto
   ) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     var updatedStock = await _stockRepository.Update(id, updateDto);
     if (updatedStock == null) return NotFound();
 
@@ -65,6 +75,8 @@ public class StockController : ControllerBase {
   [Route("{id:int}")]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   public async Task<IActionResult> Delete([FromRoute] int id) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
     bool isDeleteSuccess = await _stockRepository.Delete(id);
     if (!isDeleteSuccess) return NoContent();
 
