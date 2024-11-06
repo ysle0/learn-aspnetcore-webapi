@@ -1,10 +1,12 @@
+using System.Text;
 using api.Data;
 using api.Interfaces;
 using api.Models;
 using api.Repository;
-using api.Utils;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +38,35 @@ builder.Services.AddDbContext<AppDbContext>(options => {
     mySqlOptionBuilder => { }
   );
 });
+builder.Services.AddIdentity<AppUser, IdentityRole>(options => {
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 12;
+  })
+  .AddEntityFrameworkStores<AppDbContext>();
+
+builder.Services.AddAuthentication(options => {
+    options.DefaultAuthenticateScheme =
+      options.DefaultChallengeScheme =
+        options.DefaultForbidScheme =
+          options.DefaultScheme =
+            options.DefaultSignInScheme =
+              options.DefaultSignOutScheme
+                = JwtBearerDefaults.AuthenticationScheme;
+  })
+  .AddJwtBearer(options => {
+    options.TokenValidationParameters = new TokenValidationParameters {
+      ValidateIssuer = true,
+      ValidIssuer = builder.Configuration["Jwt:Issuer"],
+      ValidateAudience = true,
+      ValidAudience = builder.Configuration["Jwt:Audience"],
+      IssuerSigningKey = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+      ),
+    };
+  });
 
 var app = builder.Build();
 
@@ -46,6 +77,9 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
