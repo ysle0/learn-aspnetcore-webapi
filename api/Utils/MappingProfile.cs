@@ -9,6 +9,9 @@ namespace api.Utils;
 public class MappingProfile : Profile {
   public MappingProfile() {
     CreateMap<Stock, StockDto>();
+      // .IncludeMembers(s => s.Comments)
+      // .ForMember(dst => dst.)
+      
     CreateMap<StockCreateDto, Stock>();
     CreateMap<StockUpdateDto, Stock>();
 
