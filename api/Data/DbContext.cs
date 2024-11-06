@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Data;
 
-public class MySqlContext(DbContextOptions dbContextOptions)
-  : DbContext(dbContextOptions) {
+public class DbContext(DbContextOptions dbContextOptions)
+  : Microsoft.EntityFrameworkCore.DbContext(dbContextOptions) {
   public DbSet<Stock?> Stocks { get; set; }
   public DbSet<Comment> Comments { get; set; }
 }

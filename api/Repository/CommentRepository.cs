@@ -5,14 +5,15 @@ using api.Models;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using DbContext = api.Data.DbContext;
 
 namespace api.Repository;
 
 public class CommentRepository : ICommentRepository {
-  readonly MySqlContext _ctx;
+  readonly DbContext _ctx;
   readonly IMapper _mapper;
 
-  public CommentRepository(MySqlContext context, IMapper mapper) {
+  public CommentRepository(DbContext context, IMapper mapper) {
     _ctx = context;
     _mapper = mapper;
   }

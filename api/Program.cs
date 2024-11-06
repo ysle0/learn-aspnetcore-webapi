@@ -3,6 +3,7 @@ using api.Interfaces;
 using api.Repository;
 using api.Utils;
 using Microsoft.EntityFrameworkCore;
+using DbContext = api.Data.DbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,7 @@ builder.Services.AddControllers()
   });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<MySqlContext>(options => {
+builder.Services.AddDbContext<DbContext>(options => {
   options.UseMySql(
     connectionString,
     ServerVersion.AutoDetect(connectionString),
