@@ -10,5 +10,5 @@ public struct StockDto {
   [Required] public decimal LastDividend { get; set; }
   [Required] [Length(4, 280)] public string Industry { get; set; }
   [Required] public long MarketCap { get; set; }
-  List<CommentDto> Comments;
+  [Required] public List<CommentDto> Comments;
 };
