@@ -41,7 +41,13 @@ public class StockRepository : IStockRepository {
       }
     }
 
-    return await stocks.ToListAsync();
+    int skipNumber = (query.PageNumber - 1) * query.PageSize;
+    
+
+    return await stocks
+      .Skip(skipNumber)
+      .Take(query.PageSize)
+      .ToListAsync();
   }
 
   public async ValueTask<Stock?> GetById(int id) =>
