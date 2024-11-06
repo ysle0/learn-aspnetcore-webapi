@@ -7,15 +7,14 @@ using api.Models;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using DbContext = api.Data.DbContext;
 
 namespace api.Repository;
 
 public class StockRepository : IStockRepository {
-  readonly DbContext _ctx;
+  readonly AppDbContext _ctx;
   readonly IMapper _mapper;
 
-  public StockRepository(DbContext ctx, IMapper mapper) {
+  public StockRepository(AppDbContext ctx, IMapper mapper) {
     _ctx = ctx;
     _mapper = mapper;
   }
