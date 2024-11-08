@@ -1,6 +1,7 @@
 using api.Interfaces;
 using api.Models;
 using api.Services;
+using api.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,17 +14,20 @@ namespace api.Controllers;
 public class AccountController : ControllerBase {
   readonly IMapper _mapper;
   readonly UserManager<AppUser> _userManager;
+  readonly SignInManager<AppUser> _signInManager;
   readonly ITokenService _tokenService;
   readonly IUserService _userService;
 
   public AccountController(
     IMapper mapper,
     UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager,
     ITokenService tokenService,
     IUserService userService
   ) {
     _mapper = mapper;
     _userManager = userManager;
+    _signInManager = signInManager;
     _tokenService = tokenService;
     _userService = userService;
   }
@@ -74,7 +78,17 @@ public class AccountController : ControllerBase {
 
     AppUser? user = await _userManager.Users
       .FirstOrDefaultAsync(e => e.UserName == loginDto.UserName);
+    if (user == null) return Unauthorized(StrBook.Auth.InvalidAuthInfo);
 
-    return Ok();
+    var loginResult
+      = await _signInManager.CheckPasswordSignInAsync(
+        user, loginDto.Password, lockoutOnFailure: false);
+    if (!loginResult.Succeeded)
+      return Unauthorized(StrBook.Auth.InvalidAuthInfo);
+
+    var retNewUserDto = _userService.MapToNewUserDto(
+      user,
+      _tokenService.CreateToken(user));
+    return Ok(retNewUserDto);
   }
 }
