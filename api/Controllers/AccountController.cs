@@ -1,8 +1,10 @@
+using api.Interfaces;
 using api.Models;
 using api.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers;
 
@@ -12,20 +14,25 @@ public class AccountController : ControllerBase {
   readonly IMapper _mapper;
   readonly UserManager<AppUser> _userManager;
   readonly ITokenService _tokenService;
+  readonly IUserService _userService;
 
   public AccountController(
     IMapper mapper,
     UserManager<AppUser> userManager,
-    ITokenService tokenService
+    ITokenService tokenService,
+    IUserService userService
   ) {
     _mapper = mapper;
     _userManager = userManager;
     _tokenService = tokenService;
+    _userService = userService;
   }
 
   [HttpPost("register")]
+  [ProducesResponseType<NewUserDto>(StatusCodes.Status200OK)]
   public async Task<IActionResult> Register(
-    [FromBody] RegisterUserDto registerUserDto) {
+    [FromBody] RegisterUserDto registerUserDto
+  ) {
     try {
       if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -36,34 +43,38 @@ public class AccountController : ControllerBase {
 
       IdentityResult createdUser
         = await _userManager.CreateAsync(appUser, registerUserDto.Password);
+      if (!createdUser.Succeeded) {
+        return StatusCode(
+          StatusCodes.Status500InternalServerError,
+          createdUser.Errors);
+      }
 
-      if (createdUser.Succeeded) {
-        var roleResult = await _userManager.AddToRoleAsync(appUser, "User");
-        if (roleResult.Succeeded) {
-          var newUserDto = _mapper.Map<NewUserDto>(
-            registerUserDto,
-            opt => {
-              const string tokenField = nameof(NewUserDto.Token);
-              opt.AfterMap((src, dst) =>
-                dst.Token = _tokenService.CreateToken(appUser));
-              // opt.Items[tokenField] = _tokenService.CreateToken(appUser);
-            });
-
-          return Ok(newUserDto);
-        }
-
+      IdentityResult roleResult
+        = await _userManager.AddToRoleAsync(appUser, "User");
+      if (!roleResult.Succeeded) {
         return StatusCode(
           StatusCodes.Status500InternalServerError,
           roleResult.Errors);
       }
 
-      return StatusCode(
-        StatusCodes.Status500InternalServerError,
-        createdUser.Errors);
+      var newUserDto = _userService.MapToNewUserDto(
+        registerUserDto,
+        _tokenService.CreateToken(appUser));
+      return Ok(newUserDto);
     }
     catch (Exception e) {
       Console.WriteLine(e);
       return StatusCode(StatusCodes.Status500InternalServerError, e);
     }
+  }
+
+  [HttpPost("login")]
+  public async Task<IActionResult> Login([FromBody] LoginDto loginDto) {
+    if (!ModelState.IsValid) return BadRequest(ModelState);
+
+    AppUser? user = await _userManager.Users
+      .FirstOrDefaultAsync(e => e.UserName == loginDto.UserName);
+
+    return Ok();
   }
 }
