@@ -1,6 +1,7 @@
 using api.DTOs.Comment;
 using api.Interfaces;
 using api.Models;
+using api.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,7 +54,7 @@ public class CommentController : ControllerBase {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
     bool isExist = await _stockRepository.ExistsStock(stockId);
-    if (!isExist) return BadRequest("Stock does not exist");
+    if (!isExist) return BadRequest(StrBook.Stocks.NoExist);
 
     var c = _mapper.Map<Comment>(createDto);
     c.StockId = stockId;
@@ -87,7 +88,7 @@ public class CommentController : ControllerBase {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
     var deletedComment = await _commentRepository.Delete(id);
-    if (deletedComment == null) return NotFound("Comment not found");
+    if (deletedComment == null) return NotFound(StrBook.Comments.NoExist);
 
     return Ok();
   }

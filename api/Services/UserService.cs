@@ -1,5 +1,6 @@
 using api.Controllers;
 using api.Interfaces;
+using api.Models;
 using AutoMapper;
 
 namespace api.Services;
@@ -14,9 +15,18 @@ public class UserService : IUserService {
   public NewUserDto MapToNewUserDto(
     RegisterUserDto registerUserDto,
     string token
-  ) {
-    return _mapper.Map<NewUserDto>(
+  ) =>
+    _mapper.Map<NewUserDto>(
       registerUserDto,
-      opt => opt.AfterMap((src, dst) => dst.Token = token));
-  }
+      opt => opt.AfterMap((src, dst) => {
+        dst.Token = token;
+      })
+    );
+
+  public NewUserDto MapToNewUserDto(AppUser user, string token) =>
+    new() {
+      Email = user.Email,
+      UserName = user.UserName,
+      Token = token
+    };
 }

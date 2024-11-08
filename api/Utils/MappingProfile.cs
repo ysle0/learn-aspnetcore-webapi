@@ -21,5 +21,6 @@ public class MappingProfile : Profile {
 
     CreateMap<RegisterUserDto, NewUserDto>()
       .ForMember(dst => dst.Email, opt => opt.MapFrom(src => src.EmailAddress));
+    CreateMap<LoginDto, NewUserDto>();
   }
 }
