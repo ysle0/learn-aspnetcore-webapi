@@ -9,14 +9,17 @@ namespace api.Utils;
 public class MappingProfile : Profile {
   public MappingProfile() {
     CreateMap<Stock, StockDto>();
-      // .IncludeMembers(s => s.Comments)
-      // .ForMember(dst => dst.)
-      
+    // .IncludeMembers(s => s.Comments)
+    // .ForMember(dst => dst.)
+
     CreateMap<StockCreateDto, Stock>();
     CreateMap<StockUpdateDto, Stock>();
 
     CreateMap<Comment, CommentDto>();
     CreateMap<CreateCommentDto, Comment>();
     CreateMap<UpdateCommentDto, Comment>();
+
+    CreateMap<RegisterUserDto, NewUserDto>()
+      .ForMember(dst => dst.Email, opt => opt.MapFrom(src => src.EmailAddress));
   }
 }
