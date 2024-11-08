@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,8 +34,6 @@ builder.Services.AddControllers()
     options.SerializerSettings.ReferenceLoopHandling
       = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
   });
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options => {
   options.UseMySql(
     connectionString,
@@ -71,6 +70,36 @@ builder.Services.AddAuthentication(options => {
       ),
     };
   });
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options => {
+  options.SwaggerDoc("v1", new OpenApiInfo {
+    Title = "learn aspnetcore web API",
+    Version = "v1",
+  });
+  options.AddSecurityDefinition(
+    "Bearer",
+    new OpenApiSecurityScheme {
+      In = ParameterLocation.Header,
+      Description = "Please insert JWT token",
+      Name = "Authorization",
+      Type = SecuritySchemeType.Http,
+      BearerFormat = "JWT",
+      Scheme = "Bearer",
+    });
+  options.AddSecurityRequirement(new OpenApiSecurityRequirement {
+    {
+      new OpenApiSecurityScheme {
+        Reference = new OpenApiReference {
+          Type = ReferenceType.SecurityScheme,
+          Id = "Bearer",
+        },
+      },
+      []
+    },
+  });
+});
 
 var app = builder.Build();
 

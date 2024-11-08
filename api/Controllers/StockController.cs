@@ -3,6 +3,7 @@ using api.Helpers;
 using api.Interfaces;
 using api.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
@@ -23,6 +24,7 @@ public class StockController : ControllerBase {
 
   [HttpGet]
   [ProducesResponseType<IEnumerable<StockDto>>(StatusCodes.Status200OK)]
+  [Authorize]
   public async Task<IActionResult> GetAll([FromQuery] QueryObject query) {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
