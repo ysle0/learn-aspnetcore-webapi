@@ -41,8 +41,8 @@ public class StockController : ControllerBase {
   }
 
   [HttpGet]
-  [ProducesResponseType<IEnumerable<StockDto>>(StatusCodes.Status200OK)]
   [Authorize]
+  [ProducesResponseType<IEnumerable<StockDto>>(StatusCodes.Status200OK)]
   public async Task<IActionResult> GetAll([FromQuery] QueryObject query) {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -74,6 +74,7 @@ public class StockController : ControllerBase {
   }
 
   [HttpGet("{id:int}")]
+  [Authorize]
   [ProducesResponseType<StockDto>(StatusCodes.Status404NotFound)]
   public async Task<IActionResult> GetById([FromRoute] int id) {
     if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -117,6 +118,7 @@ public class StockController : ControllerBase {
   }
 
   [HttpPost]
+  [Authorize]
   [ProducesResponseType(StatusCodes.Status201Created)]
   public async Task<IActionResult> Create(
     [FromBody] StockCreateDto createDto
@@ -132,8 +134,8 @@ public class StockController : ControllerBase {
       stock);
   }
 
-  [HttpPut]
-  [Route("{id:int}")]
+  [HttpPut("{id:int}")]
+  [Authorize]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   public async Task<IActionResult> Update(
     [FromRoute] int id,
@@ -147,8 +149,8 @@ public class StockController : ControllerBase {
     return Ok(updatedStock);
   }
 
-  [HttpDelete]
-  [Route("{id:int}")]
+  [HttpDelete("{id:int}")]
+  [Authorize]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   public async Task<IActionResult> Delete([FromRoute] int id) {
     if (!ModelState.IsValid) return BadRequest(ModelState);
