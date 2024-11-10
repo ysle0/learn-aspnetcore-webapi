@@ -48,7 +48,7 @@ public class StockController : ControllerBase {
 
     var watch = Stopwatch.StartNew();
     string cacheKey
-      = StrBook.Stocks.MakeCacheGetAllStocksKey(query.GetHashCode());
+      = StrBook.Stocks.MakeCacheKeyGetAllStocks(query.GetHashCode());
 
     string? cachedJson = await _redis.StringGetAsync(cacheKey);
     List<StockDto>? allStocks = null;
@@ -80,7 +80,7 @@ public class StockController : ControllerBase {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
     var watch = Stopwatch.StartNew();
-    string cacheKey = StrBook.Stocks.MakeCacheGetOneStockKey(id);
+    string cacheKey = StrBook.Stocks.MakeCacheKeyGetOneStock(id);
 
     string? cachedJson = await _redis.StringGetAsync(cacheKey);
     Stock? stock = null;
