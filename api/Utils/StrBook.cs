@@ -23,5 +23,11 @@ public static class StrBook {
 
   public static class Comments {
     public static readonly string NoExist = "Comment does not exist";
+
+    public static string MakeCacheKeyGetAllComments() =>
+      $"{nameof(Comment)}:{nameof(CommentController.GetAllComments)}";
+
+    public static string MakeCacheKeyGetOneComment(int id) =>
+      $"{nameof(Comment)}:{nameof(CommentController.GetById)}:{id}";
   }
 }
