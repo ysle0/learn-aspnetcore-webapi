@@ -46,8 +46,8 @@ public class StockController : ControllerBase {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
     var watch = Stopwatch.StartNew();
-
-    const string CACHE_KEY = $"{nameof(StockDto)}:{nameof(GetAll)}";
+    string CACHE_KEY
+      = $"{nameof(StockDto)}:{nameof(GetAll)}:{query.GetHashCode()}";
 
     string? cachedJson = await _redis.StringGetAsync(CACHE_KEY);
     List<StockDto>? allStocks = null;
@@ -68,6 +68,7 @@ public class StockController : ControllerBase {
     }
 
     allStocks = JsonConvert.DeserializeObject<List<StockDto>>(cachedJson);
+    watch.Stop();
     return Ok(allStocks);
   }
 
@@ -76,10 +77,42 @@ public class StockController : ControllerBase {
   public async Task<IActionResult> GetById([FromRoute] int id) {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
-    Stock? stock = await _stockRepository.GetById(id);
-    if (stock == null) return NotFound();
+    var watch = Stopwatch.StartNew();
+    string CACHE_KEY = $"{nameof(StockDto)}:{nameof(GetById)}:{id}";
+    
+    string? cachedJson = await _redis.StringGetAsync(CACHE_KEY);
+    Stock? stock = null;
+    JObject result = null;
 
-    return Ok(_mapper.Map<StockDto>(stock));
+    if (string.IsNullOrWhiteSpace(cachedJson)) {
+      stock = await _stockRepository.GetById(id);
+      if (stock == null) return NotFound();
+
+      string asJson = JsonConvert.SerializeObject(stock);
+      var setTask = _redis.StringSetAsync(CACHE_KEY, asJson);
+      var expireTask
+        = _redis.KeyExpireAsync(CACHE_KEY, TimeSpan.FromSeconds(3600));
+
+      await Task.WhenAll(setTask, expireTask);
+
+      watch.Stop();
+      result = new JObject {
+        ["data"] = asJson,
+        ["elapsed"] = watch.ElapsedMilliseconds,
+      };
+
+      return Ok(result);
+    }
+
+    stock = JsonConvert.DeserializeObject<Stock>(cachedJson);
+    var resultStockDto = _mapper.Map<StockDto>(stock);
+    watch.Stop();
+
+    result = new JObject {
+      ["data"] = JsonConvert.SerializeObject(resultStockDto),
+      ["elapsedTime"] = watch.ElapsedMilliseconds,
+    };
+    return Ok(result);
   }
 
   [HttpPost]
