@@ -42,7 +42,6 @@ public class StockRepository : IStockRepository {
     }
 
     int skipNumber = (query.PageNumber - 1) * query.PageSize;
-    
 
     return await stocks
       .Skip(skipNumber)

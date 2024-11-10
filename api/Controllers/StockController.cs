@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Net.Http.Headers;
 using api.DTOs.Stock;
 using api.Helpers;
 using api.Interfaces;
@@ -5,6 +7,10 @@ using api.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using StackExchange.Redis;
 
 namespace api.Controllers;
 
@@ -13,12 +19,23 @@ namespace api.Controllers;
 public class StockController : ControllerBase {
   readonly IStockRepository _stockRepository;
   readonly IMapper _mapper;
+  readonly IDatabase _redis;
 
   public StockController(
-    IStockRepository stockRepository,
-    IMapper mapper
+    IMapper mapper,
+    HttpClient httpClient,
+    IConnectionMultiplexer muxer,
+    IStockRepository stockRepository
   ) {
     _mapper = mapper;
+    // _httpClient = httpClient;
+    // _httpClient
+    //   .DefaultRequestHeaders
+    //   .UserAgent
+    //   .Add(
+    //     new ProductInfoHeaderValue("learnAspNetCoreWebApiApp", "1.0"));
+    _redis = muxer.GetDatabase();
+
     _stockRepository = stockRepository;
   }
 
@@ -28,7 +45,29 @@ public class StockController : ControllerBase {
   public async Task<IActionResult> GetAll([FromQuery] QueryObject query) {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
-    var allStocks = await _stockRepository.GetAll(query);
+    var watch = Stopwatch.StartNew();
+
+    const string CACHE_KEY = $"{nameof(StockDto)}:{nameof(GetAll)}";
+
+    string? cachedJson = await _redis.StringGetAsync(CACHE_KEY);
+    List<StockDto>? allStocks = null;
+    if (string.IsNullOrWhiteSpace(cachedJson)) {
+      allStocks = await _stockRepository.GetAll(query);
+
+      string allStocksAsJson = JsonConvert.SerializeObject(allStocks);
+      // Console.WriteLine($"all stocks as json:\n{allStocksAsJson}");
+
+      var setCacheTask = _redis.StringSetAsync(CACHE_KEY, allStocksAsJson);
+      var expiredCacheTask
+        = _redis.KeyExpireAsync(CACHE_KEY, TimeSpan.FromSeconds(3600));
+
+      await Task.WhenAll(setCacheTask, expiredCacheTask);
+
+      watch.Stop();
+      return Ok(allStocks);
+    }
+
+    allStocks = JsonConvert.DeserializeObject<List<StockDto>>(cachedJson);
     return Ok(allStocks);
   }
 
