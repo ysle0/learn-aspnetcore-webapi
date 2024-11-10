@@ -4,6 +4,7 @@ using api.DTOs.Stock;
 using api.Helpers;
 using api.Interfaces;
 using api.Models;
+using api.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -46,10 +47,10 @@ public class StockController : ControllerBase {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
     var watch = Stopwatch.StartNew();
-    string CACHE_KEY
-      = $"{nameof(StockDto)}:{nameof(GetAll)}:{query.GetHashCode()}";
+    string cacheKey
+      = StrBook.Stocks.MakeCacheGetAllStocksKey(query.GetHashCode());
 
-    string? cachedJson = await _redis.StringGetAsync(CACHE_KEY);
+    string? cachedJson = await _redis.StringGetAsync(cacheKey);
     List<StockDto>? allStocks = null;
     if (string.IsNullOrWhiteSpace(cachedJson)) {
       allStocks = await _stockRepository.GetAll(query);
@@ -57,9 +58,9 @@ public class StockController : ControllerBase {
       string allStocksAsJson = JsonConvert.SerializeObject(allStocks);
       // Console.WriteLine($"all stocks as json:\n{allStocksAsJson}");
 
-      var setCacheTask = _redis.StringSetAsync(CACHE_KEY, allStocksAsJson);
+      var setCacheTask = _redis.StringSetAsync(cacheKey, allStocksAsJson);
       var expiredCacheTask
-        = _redis.KeyExpireAsync(CACHE_KEY, TimeSpan.FromSeconds(3600));
+        = _redis.KeyExpireAsync(cacheKey, TimeSpan.FromSeconds(3600));
 
       await Task.WhenAll(setCacheTask, expiredCacheTask);
 
@@ -78,9 +79,9 @@ public class StockController : ControllerBase {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
     var watch = Stopwatch.StartNew();
-    string CACHE_KEY = $"{nameof(StockDto)}:{nameof(GetById)}:{id}";
-    
-    string? cachedJson = await _redis.StringGetAsync(CACHE_KEY);
+    string cacheKey = StrBook.Stocks.MakeCacheGetOneStockKey(id);
+
+    string? cachedJson = await _redis.StringGetAsync(cacheKey);
     Stock? stock = null;
     JObject result = null;
 
@@ -89,9 +90,9 @@ public class StockController : ControllerBase {
       if (stock == null) return NotFound();
 
       string asJson = JsonConvert.SerializeObject(stock);
-      var setTask = _redis.StringSetAsync(CACHE_KEY, asJson);
+      var setTask = _redis.StringSetAsync(cacheKey, asJson);
       var expireTask
-        = _redis.KeyExpireAsync(CACHE_KEY, TimeSpan.FromSeconds(3600));
+        = _redis.KeyExpireAsync(cacheKey, TimeSpan.FromSeconds(3600));
 
       await Task.WhenAll(setTask, expireTask);
 
