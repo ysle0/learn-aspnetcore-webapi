@@ -49,10 +49,15 @@ public class StockRepository : IStockRepository {
       .ToListAsync();
   }
 
-  public async ValueTask<Stock?> GetById(int id) =>
-    await _ctx.Stocks.FindAsync(id);
+  public async ValueTask<Stock?> GetById(int id) {
+    return await _ctx.Stocks.FindAsync(id);
+  }
 
-  public async Task<bool> AddNew(Stock? s) {
+  public async Task<Stock?> GetBySymbol(string symbol) {
+    return await _ctx.Stocks.SingleOrDefaultAsync(s => s.Symbol == symbol);
+  }
+
+  public async Task<bool> Create(Stock? s) {
     await _ctx.Stocks.AddAsync(s);
     int cnt = await _ctx.SaveChangesAsync();
 

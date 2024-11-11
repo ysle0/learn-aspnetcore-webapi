@@ -25,4 +25,9 @@ public class PortfolioRepository : IPortfolioRepository {
       .ProjectTo<Stock>(_mapper.ConfigurationProvider)
       .ToListAsync();
   }
+
+  public async Task CreateUserPortfolio(Portfolio portfolio) {
+    await _ctx.Portfolios.AddAsync(portfolio);
+    await _ctx.SaveChangesAsync();
+  }
 }

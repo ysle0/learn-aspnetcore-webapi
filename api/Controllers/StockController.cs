@@ -126,7 +126,7 @@ public class StockController : ControllerBase {
     if (!ModelState.IsValid) return BadRequest(ModelState);
 
     var stock = _mapper.Map<Stock>(createDto);
-    await _stockRepository.AddNew(stock);
+    await _stockRepository.Create(stock);
 
     return CreatedAtAction(
       nameof(GetById),

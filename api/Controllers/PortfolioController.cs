@@ -37,7 +37,7 @@ public sealed class PortfolioController : ControllerBase {
   [HttpGet]
   [Authorize]
   [ProducesResponseType<IEnumerable<Stock>>(StatusCodes.Status200OK)]
-  public async Task<IActionResult> GetUserPortfolio([FromQuery] object qo) {
+  public async Task<IActionResult> GetUserPortfolio() {
     string userName = User.GetUsername();
     AppUser? appUser = await _userManager.FindByNameAsync(userName);
     if (appUser == null) return BadRequest();
@@ -46,5 +46,39 @@ public sealed class PortfolioController : ControllerBase {
       = await _portfolioRepository.GetUserPortfolio(appUser);
 
     return Ok(userPortfolios);
+  }
+
+  [HttpPost]
+  [Authorize]
+  [ProducesResponseType(StatusCodes.Status201Created)]
+  public async Task<IActionResult> CreateUserPortfolio(string symbol) {
+    if (string.IsNullOrWhiteSpace(symbol)) return BadRequest();
+
+    string userName = User.GetUsername();
+    AppUser? appUser = await _userManager.FindByNameAsync(userName);
+    if (appUser == null) return BadRequest();
+
+    Stock? stock = await _stockRepository.GetBySymbol(symbol);
+    if (stock == null)
+      return StatusCode(StatusCodes.Status500InternalServerError);
+
+    var userPortfolio = await _portfolioRepository.GetUserPortfolio(appUser);
+    if (userPortfolio.Any(e => e.Symbol.ToLower() == symbol.ToLower()))
+      return BadRequest("Stock already exists");
+
+    var portfolioModel = new Portfolio {
+      StockId = stock.Id,
+      AppUserId = appUser.Id,
+    };
+
+    await _portfolioRepository.CreateUserPortfolio(portfolioModel);
+
+    if (portfolioModel == null) {
+      return StatusCode(
+        StatusCodes.Status500InternalServerError,
+        "Portfolio could not be created");
+    }
+
+    return Created();
   }
 }
