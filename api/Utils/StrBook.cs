@@ -30,4 +30,9 @@ public static class StrBook {
     public static string MakeCacheKeyGetOneComment(int id) =>
       $"{nameof(Comment)}:{nameof(CommentController.GetById)}:{id}";
   }
+
+  public static class Portfolio {
+    public static string MakeCacheKeyGetUserPortfolios(string appUserId) =>
+      $"{nameof(Models.Portfolio)}:{nameof(PortfolioController.GetUserPortfolio)}:{appUserId}";
+  } 
 }

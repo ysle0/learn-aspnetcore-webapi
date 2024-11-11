@@ -1,10 +1,14 @@
+using System.Diagnostics;
 using api.Extensions;
 using api.Interfaces;
 using api.Models;
+using api.Utils;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StackExchange.Redis;
 
 namespace api.Controllers;
@@ -42,10 +46,36 @@ public sealed class PortfolioController : ControllerBase {
     AppUser? appUser = await _userManager.FindByNameAsync(userName);
     if (appUser == null) return BadRequest();
 
-    IList<Stock> userPortfolios
-      = await _portfolioRepository.GetUserPortfolio(appUser);
+    var watch = Stopwatch.StartNew();
+    string cacheKey = StrBook.Portfolio.MakeCacheKeyGetUserPortfolios(appUser.Id);
+    var cachedValue = await _redis.StringGetAsync(cacheKey);
+    IList<Stock> userPortfolios = null;
+    JObject result = null;
+    if (string.IsNullOrWhiteSpace(cachedValue)) {
+      userPortfolios = await _portfolioRepository.GetUserPortfolio(appUser);
+      string asJson = JsonConvert.SerializeObject(userPortfolios);
+      
+      var setTask = _redis.StringSetAsync(cacheKey, asJson);
+      var expireTask = _redis.KeyExpireAsync(cacheKey, TimeSpan.FromSeconds(3600));
+      
+      await Task.WhenAll(setTask, expireTask);
 
-    return Ok(userPortfolios);
+      watch.Stop();
+      result = new JObject {
+        ["data"] = asJson,
+        ["elapsedTime"] = watch.ElapsedMilliseconds,
+      };
+
+      return Ok(result);
+    }
+    
+    watch.Stop();
+    result = new JObject {
+      ["data"] = JsonConvert.SerializeObject(userPortfolios),
+      ["elapsedTime"] = watch.ElapsedMilliseconds,
+    };
+    
+    return Ok(result);
   }
 
   [HttpPost]
