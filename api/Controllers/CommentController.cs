@@ -15,6 +15,8 @@ namespace api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class CommentController : ControllerBase {
+  const string ELAPSED_TIME = "elapsedTime";
+  
   readonly ICommentRepository _commentRepository;
   readonly IStockRepository _stockRepository;
   readonly IMapper _mapper;
@@ -56,7 +58,7 @@ public class CommentController : ControllerBase {
       watch.Stop();
       result = new JObject {
         ["data"] = asJson,
-        ["elapsedTime"] = watch.ElapsedMilliseconds
+        [ELAPSED_TIME] = watch.ElapsedMilliseconds
       };
 
       return Ok(result);
@@ -65,7 +67,7 @@ public class CommentController : ControllerBase {
     watch.Stop();
     result = new JObject {
       ["data"] = cachedJson,
-      ["elapsedTime"] = watch.ElapsedMilliseconds
+      [ELAPSED_TIME] = watch.ElapsedMilliseconds
     };
 
     return Ok(result);
@@ -80,8 +82,7 @@ public class CommentController : ControllerBase {
     var watch = Stopwatch.StartNew();
     string cacheKey = StrBook.Comments.MakeCacheKeyGetOneComment(id);
     string? cachedJson = await _redis.StringGetAsync(cacheKey);
-    CommentDto commentDto = null;
-    JObject result = null;
+    JObject result;
     if (string.IsNullOrWhiteSpace(cachedJson)) {
       var comment = await _commentRepository.GetById(id);
       if (comment == null) return NotFound();
@@ -98,7 +99,7 @@ public class CommentController : ControllerBase {
       watch.Stop();
       result = new JObject {
         ["data"] = asJson,
-        ["elapsedTime"] = watch.ElapsedMilliseconds
+        [ELAPSED_TIME] = watch.ElapsedMilliseconds
       };
 
       return Ok(result);
@@ -107,7 +108,7 @@ public class CommentController : ControllerBase {
     watch.Stop();
     result = new JObject {
       ["data"] = cachedJson,
-      ["elapsedTime"] = watch.ElapsedMilliseconds
+      [ELAPSED_TIME] = watch.ElapsedMilliseconds
     };
 
     return Ok(result);

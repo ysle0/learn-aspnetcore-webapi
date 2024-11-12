@@ -47,17 +47,19 @@ public sealed class PortfolioController : ControllerBase {
     if (appUser == null) return BadRequest();
 
     var watch = Stopwatch.StartNew();
-    string cacheKey = StrBook.Portfolio.MakeCacheKeyGetUserPortfolios(appUser.Id);
-    var cachedValue = await _redis.StringGetAsync(cacheKey);
-    IList<Stock> userPortfolios = null;
-    JObject result = null;
+    string cacheKey
+      = StrBook.Portfolio.MakeCacheKeyGetUserPortfolios(appUser.Id);
+    string? cachedValue = await _redis.StringGetAsync(cacheKey);
+    IList<Stock>? userPortfolios = null;
+    JObject result;
     if (string.IsNullOrWhiteSpace(cachedValue)) {
       userPortfolios = await _portfolioRepository.GetUserPortfolio(appUser);
       string asJson = JsonConvert.SerializeObject(userPortfolios);
-      
+
       var setTask = _redis.StringSetAsync(cacheKey, asJson);
-      var expireTask = _redis.KeyExpireAsync(cacheKey, TimeSpan.FromSeconds(3600));
-      
+      var expireTask
+        = _redis.KeyExpireAsync(cacheKey, TimeSpan.FromSeconds(3600));
+
       await Task.WhenAll(setTask, expireTask);
 
       watch.Stop();
@@ -68,13 +70,13 @@ public sealed class PortfolioController : ControllerBase {
 
       return Ok(result);
     }
-    
+
     watch.Stop();
     result = new JObject {
-      ["data"] = JsonConvert.SerializeObject(userPortfolios),
+      ["data"] = cachedValue,
       ["elapsedTime"] = watch.ElapsedMilliseconds,
     };
-    
+
     return Ok(result);
   }
 
@@ -109,6 +111,40 @@ public sealed class PortfolioController : ControllerBase {
         "Portfolio could not be created");
     }
 
+    string cacheKey
+      = StrBook.Portfolio.MakeCacheKeyGetUserPortfolios(appUser.Id);
+    _redis.KeyExpire(
+      cacheKey, TimeSpan.FromSeconds(0), CommandFlags.FireAndForget);
+
     return Created();
+  }
+
+
+  [HttpDelete]
+  [Authorize]
+  public async Task<IActionResult> Delete(string symbol) {
+    var userName = base.User.GetUsername();
+    AppUser? appUser = await _userManager.FindByNameAsync(userName);
+    if (appUser == null) return BadRequest();
+
+    IList<Stock>? userPortfolio
+      = await _portfolioRepository.GetUserPortfolio(appUser);
+    if (userPortfolio == null) return BadRequest();
+
+    List<Stock> filteredStocks = userPortfolio
+      .Where(e => e.Symbol.ToLower() == symbol.ToLower())
+      .ToList();
+
+    if (filteredStocks.Count == 0)
+      return BadRequest(StrBook.Portfolio.NoStocksFound);
+
+    await _portfolioRepository.DeleteUserPortfolio(appUser, symbol);
+    
+    string cacheKey
+      = StrBook.Portfolio.MakeCacheKeyGetUserPortfolios(appUser.Id);
+    _redis.KeyExpire(
+      cacheKey, TimeSpan.FromSeconds(0), CommandFlags.FireAndForget);
+
+    return Ok();
   }
 }

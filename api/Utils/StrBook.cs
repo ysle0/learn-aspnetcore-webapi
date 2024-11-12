@@ -34,5 +34,7 @@ public static class StrBook {
   public static class Portfolio {
     public static string MakeCacheKeyGetUserPortfolios(string appUserId) =>
       $"{nameof(Models.Portfolio)}:{nameof(PortfolioController.GetUserPortfolio)}:{appUserId}";
-  } 
+
+    public static readonly string NoStocksFound = "No stocks found";
+  }
 }
